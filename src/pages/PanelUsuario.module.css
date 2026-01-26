@@ -1,0 +1,53 @@
+/* src/pages/PanelUsuario.module.css */
+.content {
+  padding: 0;
+  background: #f0f2f5;
+}
+
+.contentCollapsed {
+  margin-left: 80px;
+  transition: margin-left 0.2s;
+}
+
+.innerContent {
+  padding: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.info {
+  flex: 1;
+  min-width: 300px;
+}
+
+.badge {
+  margin-top: 12px;
+  font-size: 1.2rem;
+  color: #1890ff;
+  font-weight: 500;
+}
+
+.avatar {
+  border: 4px solid #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.card {
+  margin-bottom: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.actions {
+  margin-top: 40px;
+  text-align: center;
+}

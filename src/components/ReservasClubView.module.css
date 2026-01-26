@@ -1,0 +1,33 @@
+/* src/components/ReservasClubView.module.css */
+.container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+.tabs {
+  margin-top: 16px;
+}
+
+.table {
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+}

@@ -1,0 +1,24 @@
+/* src/components/CrearEmpleadoModal.module.css */
+.modal {
+  /* Styles for dark/light */
+  --background: var(--background); /* Usa variables de theme */
+}
+
+.progress {
+  text-align: center;
+  margin-bottom: 16px;
+  color: gray;
+}
+
+.title {
+  margin-bottom: 24px;
+}
+
+.campo {
+  margin-bottom: 32px;
+}
+
+.botones {
+  display: flex;
+  justify-content: flex-end;
+}

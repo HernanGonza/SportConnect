@@ -1,0 +1,25 @@
+/* src/components/CrearCanchaModal.module.css */
+.modal {
+  width: 600px !important;
+}
+
+.progress {
+  text-align: center;
+  margin-bottom: 8px;
+  color: #888;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.campo {
+  margin-bottom: 24px;
+}
+
+.botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+}

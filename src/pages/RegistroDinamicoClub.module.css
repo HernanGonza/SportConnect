@@ -1,0 +1,132 @@
+/* src/pages/RegistroDinamicoClub.module.css */
+.contenedor {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+  padding: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.tarjeta {
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.progreso {
+  text-align: right;
+  font-size: 0.875rem;
+  color: #888;
+  margin-bottom: 2rem;
+}
+
+.tarjeta h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 2.5rem;
+  color: #333;
+}
+
+.pregunta {
+  margin: 2rem 0;
+}
+
+.pregunta input,
+.pregunta textarea {
+  width: 100%;
+  padding: 8px 0;
+  font-size: 1.125rem;
+  border: none;
+  border-bottom: 2px solid #e0e0e0;
+  outline: none;
+  background: transparent;
+  color: #333;
+}
+
+.pregunta input:focus,
+.pregunta textarea:focus {
+  border-bottom-color: #1890ff;
+}
+
+.pregunta input::placeholder,
+.pregunta textarea::placeholder {
+  color: #aaa;
+  opacity: 1;
+}
+
+.pregunta .ant-picker,
+.pregunta .ant-select {
+  width: 100%;
+}
+
+.pregunta .ant-picker-input > input,
+.pregunta .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 8px 0 !important;
+  font-size: 1.125rem;
+  border-bottom: 2px solid #e0e0e0 !important;
+}
+
+.pregunta .ant-picker-focused .ant-picker-input > input,
+.pregunta .ant-select-focused .ant-select-selector {
+  border-bottom-color: #1890ff !important;
+}
+
+.botones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 2rem;
+}
+
+.botones button {
+  padding: 10px 24px;
+  font-size: 1rem;
+  border-radius: 8px;
+}
+
+.opcionesLogin {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resumen {
+  padding: 2rem 0;
+  font-size: 1.125rem;
+}
+
+.resumen p {
+  margin: 8px 0;
+  text-align: left;
+}
+
+.serviciosGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.responsableForm {
+  width: 100%;
+}
+
+.formItem {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.formItem label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+}

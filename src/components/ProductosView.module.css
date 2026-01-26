@@ -1,0 +1,19 @@
+/* src/components/ProductosView.module.css */
+.container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto; /* Centrado global */
+}
+
+.header {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table {
+  margin: 0 auto; /* Centrado de tabla */
+  width: 100%;
+  max-width: 1000px; /* Ancho máximo para centrado */
+}

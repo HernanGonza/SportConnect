@@ -1,0 +1,22 @@
+/* src/components/CanchasView.module.css */
+.container {
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.canchaCard {
+  width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.canchaCard:hover {
+  transform: translateY(-4px);
+}

@@ -1,0 +1,19 @@
+/* src/components/CrearProductoModal.module.css */
+.stepInfo {
+  font-size: 1rem;
+  color: gray;
+  margin-bottom: 8px;
+}
+
+.stepTitle {
+  margin-bottom: 16px;
+}
+
+.field {
+  margin-bottom: 24px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+}

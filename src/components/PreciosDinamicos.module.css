@@ -1,0 +1,43 @@
+/* src/components/PreciosDinamicos.module.css */
+.precioFijo {
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  color: #666;
+}
+
+.precioContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.precioLabel {
+  font-size: 14px;
+  color: #666;
+}
+
+.precioValor {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1890ff;
+}
+
+.multiplicador {
+  font-size: 16px;
+  color: #faad14;
+}
+
+.barra {
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.barraLlena {
+  height: 100%;
+  background: linear-gradient(to right, #52c41a, #faad14, #f5222d);
+  transition: width 0.5s ease;
+}

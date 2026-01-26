@@ -1,0 +1,59 @@
+/* src/components/Header.module.css */
+.header {
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  background: rgba(0, 21, 41, 0.9);
+  backdrop-filter: blur(10px);
+  height: 64px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logoLink {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.userActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: white;
+}
+
+.userActions span {
+  font-size: 1rem;
+}
+
+.menu {
+  background: transparent;
+  border: none;
+}
+
+.menu .ant-menu-item a {
+  color: white;
+  font-size: 1rem;
+}
+
+.menu .ant-menu-item-selected a,
+.menu .ant-menu-item a:hover {
+  color: #1890ff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 24px;
+  }
+
+  .logoLink {
+    font-size: 1.3rem;
+  }
+}
