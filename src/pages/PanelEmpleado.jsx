@@ -1,12 +1,8 @@
 // src/pages/PanelEmpleado.jsx
 import React, { useState, useEffect } from 'react';
-import { Layout, Spin, message } from 'antd';
-import Header from '../components/Header';
+import { Spin, message } from 'antd';
 import Sidebar from '../components/Sidebar';
 import supabase from '../services/supabaseClient';
-import styles from './PanelClub.module.css';
-
-const { Content } = Layout;
 
 export default function PanelEmpleado() {
   const [club, setClub] = useState(null);
@@ -69,27 +65,40 @@ export default function PanelEmpleado() {
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header />
-      <Layout>
-        <Sidebar
-          userType="empleado"
-          userName={empleado.nombre}
-          userPhoto={null}
-          onCollapse={setCollapsed}
-        />
-        <Layout>
-          <Content className={`${styles.content} ${collapsed ? styles.contentCollapsed : ''}`}>
-            <div style={{ padding: '40px' }}>
-              <h1>Bienvenido, {empleado.nombre}</h1>
-              <h2>Club: {club.nombre}</h2>
-              <p><strong>Rol:</strong> {empleado.rol.charAt(0).toUpperCase() + empleado.rol.slice(1)}</p>
-              <p>Desde aquí puedes gestionar reservas, caja diaria, stock y más herramientas del club.</p>
-              {/* Próximamente: módulos específicos para empleado */}
-            </div>
-          </Content>
-        </Layout>
-      </Layout>
-    </Layout>
+    <div className="min-h-screen bg-slate-50 flex">
+      <Sidebar 
+        userType="empleado" 
+        userName={empleado?.nombre || 'Empleado'} 
+        userPhoto={null}
+      />
+      
+      <main className="flex-1 lg:pl-72 min-h-screen transition-all duration-300">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
+          <h1 className="text-3xl font-heading font-bold text-slate-900 mb-2">Bienvenido, {empleado?.nombre}</h1>
+          <h2 className="text-xl text-slate-500 mb-6">Club: {club?.nombre}</h2>
+          
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
+             <p className="text-lg"><strong>Rol:</strong> <span className="capitalize">{empleado?.rol}</span></p>
+             <p className="text-slate-500 mt-2">Desde aquí puedes gestionar reservas, caja diaria, stock y más herramientas del club.</p>
+          </div>
+          
+          {/* Dashboard Cards or quick actions could go here */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer">
+                <h3 className="font-bold text-lg mb-2">Reservas</h3>
+                <p className="text-sm text-slate-500">Gestionar turnos y canchas.</p>
+             </div>
+             <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer">
+                <h3 className="font-bold text-lg mb-2">Caja</h3>
+                <p className="text-sm text-slate-500">Ver movimientos del día.</p>
+             </div>
+             <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer">
+                <h3 className="font-bold text-lg mb-2">Stock</h3>
+                <p className="text-sm text-slate-500">Control de inventario.</p>
+             </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

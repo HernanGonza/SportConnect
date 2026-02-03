@@ -1,69 +1,144 @@
 // src/pages/PanelClub.jsx
 import React, { useState, useEffect } from 'react';
-import { Layout, Spin, Table, Button, message, Space, Popconfirm } from 'antd';
-import { Routes, Route } from 'react-router-dom';
-import Header from '../components/Header';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Users, TrendingUp, Calendar, DollarSign, Activity, 
+  MoreVertical, Edit, Trash2, Plus, Search, Filter 
+} from 'lucide-react';
+import { message } from 'antd'; // Keep for notifications for now
 import Sidebar from '../components/Sidebar';
 import CrearEmpleadoModal from '../components/CrearEmpleadoModal';
 import EditarEmpleadoModal from '../components/EditarEmpleadoModal';
 import ProductosView from '../components/ProductosView';
-import supabase from '../services/supabaseClient';
-import { eliminarEmpleado } from '../services/authService';
-import styles from './PanelClub.module.css';
 import CanchasView from '../components/CanchasView';
 import ReservasClubView from '../components/ReservasClubView';
+import VentasView from '../components/VentasView';
+import StockView from '../components/StockView';
+import PromocionesView from '../components/PromocionesView';
+import ConfiguracionClubView from '../components/ConfiguracionClubView';
+import supabase from '../services/supabaseClient';
+import { eliminarEmpleado } from '../services/authService';
 
+// Dashboard Component
+const DashboardView = ({ club }) => {
+  const stats = [
+    { label: 'Ingresos del día', value: '$125.000', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-50' },
+    { label: 'Reservas hoy', value: '18', icon: Calendar, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { label: 'Canchas activas', value: '4/4', icon: Activity, color: 'text-orange-500', bg: 'bg-orange-50' },
+    { label: 'Nuevos clientes', value: '+12', icon: Users, color: 'text-purple-500', bg: 'bg-purple-50' },
+  ];
 
-const { Content } = Layout;
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-8"
+    >
+      <div className="flex flex-col md:flex-row justify-between items-end gap-4">
+        <div>
+          <h1 className="text-3xl font-heading font-bold text-secondary">
+            Hola, <span className="text-primary">{club?.nombre}</span> 👋
+          </h1>
+          <p className="text-slate-500 mt-2">Aquí tienes el resumen de tu complejo hoy.</p>
+        </div>
+        <div className="flex gap-3">
+          <button className="btn-primary px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20">
+            Nueva Reserva
+          </button>
+        </div>
+      </div>
 
-const DashboardView = ({ club }) => (
-  <div style={{ padding: '24px' }}>
-    <h1>Dashboard del Club</h1>
-    <p>Bienvenido, {club?.nombre}.</p>
-    <p>Próximamente: estadísticas, reservas del día, ingresos, etc.</p>
-  </div>
-);
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-2xl ${stat.bg}`}>
+                <stat.icon className={stat.color} size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-slate-400 font-medium">{stat.label}</p>
+                <h3 className="text-2xl font-bold text-secondary">{stat.value}</h3>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
 
+      {/* Recent Activity / Chart Placeholder */}
+      <div className="grid lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-xl font-bold text-secondary">Ocupación Semanal</h3>
+            <button className="text-primary text-sm font-bold">Ver reporte</button>
+          </div>
+          <div className="h-64 flex items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <p className="text-slate-400 font-medium">Gráfico de ocupación próximamente</p>
+          </div>
+        </div>
+
+        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+          <h3 className="text-xl font-bold text-secondary mb-6">Actividad Reciente</h3>
+          <div className="space-y-6">
+            {[1, 2, 3].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs">
+                  JR
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-secondary">Juan Rodriguez reservó Cancha 1</p>
+                  <p className="text-xs text-slate-400">Hace 5 minutos</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Empleados Component Refactored
 const EmpleadosView = ({ clubId }) => {
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalCrearVisible, setModalCrearVisible] = useState(false);
   const [modalEditarVisible, setModalEditarVisible] = useState(false);
   const [empleadoEditar, setEmpleadoEditar] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const cargarEmpleados = async () => {
-      const { data, error } = await supabase
-        .from('empleados_club')
-        .select('*')
-        .eq('club_id', clubId);
-
-      if (error) {
-        message.error('Error cargando empleados');
-        console.error(error);
-      } else {
-        setEmpleados(data || []);
-      }
-      setLoading(false);
-    };
-
-    if (clubId) cargarEmpleados();
-  }, [clubId]);
-
-  const handleSuccess = async () => {
-    const { data } = await supabase
+  const cargarEmpleados = async () => {
+    const { data, error } = await supabase
       .from('empleados_club')
       .select('*')
       .eq('club_id', clubId);
 
-    setEmpleados(data || []);
+    if (error) {
+      message.error('Error cargando empleados');
+    } else {
+      setEmpleados(data || []);
+    }
+    setLoading(false);
   };
 
+  useEffect(() => {
+    if (clubId) cargarEmpleados();
+  }, [clubId]);
+
   const handleEliminar = async (id) => {
+    if(!window.confirm('¿Seguro que deseas eliminar este empleado?')) return;
     try {
       await eliminarEmpleado(id);
       message.success('Empleado eliminado');
-      handleSuccess();
+      cargarEmpleados();
     } catch (err) {
       message.error(err.message || 'Error al eliminar');
     }
@@ -74,71 +149,134 @@ const EmpleadosView = ({ clubId }) => {
     setModalEditarVisible(true);
   };
 
-  const columns = [
-    { title: 'Nombre', dataIndex: 'nombre', key: 'nombre' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Rol', dataIndex: 'rol', key: 'rol', render: (rol) => rol.charAt(0).toUpperCase() + rol.slice(1) },
-    {
-      title: 'Acciones',
-      key: 'acciones',
-      render: (_, record) => (
-        <Space>
-          <Button type="link" onClick={() => handleEditar(record)}>
-            Editar
-          </Button>
-          <Popconfirm
-            title="¿Seguro que querés eliminar este empleado?"
-            onConfirm={() => handleEliminar(record.id)}
-            okText="Sí"
-            cancelText="No"
-          >
-            <Button type="link" danger>
-              Eliminar
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
-  if (loading) return <Spin />;
+  const filteredEmpleados = empleados.filter(emp => 
+    emp.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <h2>Gestión de Empleados</h2>
-        <Button type="primary" onClick={() => setModalCrearVisible(true)}>
-          Crear empleado
-        </Button>
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-secondary">Equipo de Trabajo</h2>
+          <p className="text-slate-500">Gestiona los accesos y roles de tus empleados</p>
+        </div>
+        <button 
+          onClick={() => setModalCrearVisible(true)}
+          className="btn-primary px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary/20"
+        >
+          <Plus size={20} /> Nuevo Empleado
+        </button>
       </div>
 
-      <Table dataSource={empleados} columns={columns} rowKey="id" pagination={{ pageSize: 10 }} />
+      <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+        <Search className="text-slate-400" size={20} />
+        <input 
+          type="text" 
+          placeholder="Buscar por nombre o email..." 
+          className="flex-1 outline-none text-slate-600 placeholder:text-slate-400"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors">
+          <Filter size={20} />
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-20">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredEmpleados.map((emp) => (
+            <motion.div 
+              key={emp.id}
+              layout
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group relative"
+            >
+              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                <button 
+                  onClick={() => handleEditar(emp)}
+                  className="p-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                >
+                  <Edit size={16} />
+                </button>
+                <button 
+                  onClick={() => handleEliminar(emp.id)}
+                  className="p-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center text-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-slate-100 to-slate-200 flex items-center justify-center text-2xl font-bold text-slate-400 mb-4">
+                  {emp.nombre[0].toUpperCase()}
+                </div>
+                <h3 className="text-lg font-bold text-secondary">{emp.nombre}</h3>
+                <p className="text-slate-500 text-sm mb-3">{emp.email}</p>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  emp.rol === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'
+                }`}>
+                  {emp.rol}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+          
+          {filteredEmpleados.length === 0 && (
+            <div className="col-span-full text-center py-12 text-slate-400">
+              No se encontraron empleados.
+            </div>
+          )}
+        </div>
+      )}
 
       <CrearEmpleadoModal
         visible={modalCrearVisible}
         onCancel={() => setModalCrearVisible(false)}
         clubId={clubId}
-        onSuccess={handleSuccess}
+        onSuccess={cargarEmpleados}
       />
 
       <EditarEmpleadoModal
         visible={modalEditarVisible}
         onCancel={() => setModalEditarVisible(false)}
         empleado={empleadoEditar}
-        onSuccess={handleSuccess}
+        onSuccess={cargarEmpleados}
       />
-    </div>
+    </motion.div>
   );
 };
 
+// Main Layout
 export default function PanelClub() {
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const cargarDatos = async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // MOCK DATA FOR PREVIEW
+      if (!user) {
+        setClub({
+          id: 'mock-club',
+          nombre: 'Padel Center Demo',
+          foto_url: null,
+          direccion: 'Av. Siempre Viva 123'
+        });
+        setLoading(false);
+        return;
+      }
+
       if (!user) {
         setLoading(false);
         return;
@@ -162,27 +300,39 @@ export default function PanelClub() {
     cargarDatos();
   }, []);
 
-  if (loading) return <Spin spinning fullscreen />;
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center bg-slate-50">
+      <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
+    </div>
+  );
 
   if (!club) return <div>Error: No se encontró el club. Por favor, cierra sesión y vuelve a entrar.</div>;
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header />
-      <Layout>
-        <Sidebar userType="club" userName={club.nombre} userPhoto={club.foto_url} onCollapse={setCollapsed} />
-        <Layout>
-          <Content className={`${styles.content} ${collapsed ? styles.contentCollapsed : ''}`}>
-            <Routes>
-              <Route path="/" element={<DashboardView club={club} />} />
-              <Route path="/empleados" element={<EmpleadosView clubId={club.id} />} />
-              <Route path="/stock" element={<ProductosView clubId={club.id} />} />
-              <Route path="/canchas" element={<CanchasView clubId={club.id} />} />
-              <Route path="/reservas" element={<ReservasClubView clubId={club.id} />} />
-            </Routes>
-          </Content>
-        </Layout>
-      </Layout>
-    </Layout>
+    <div className="min-h-screen bg-slate-50 flex">
+      <Sidebar 
+        userType="club" 
+        userName={club?.nombre || 'Club'} 
+        userPhoto={club?.foto_url}
+      />
+      
+      <main className="flex-1 lg:pl-72 min-h-screen transition-all duration-300">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
+          <Routes>
+            <Route index element={<DashboardView club={club} />} />
+            <Route path="empleados" element={<EmpleadosView clubId={club?.id} />} />
+            <Route path="productos" element={<ProductosView clubId={club?.id} />} />
+            <Route path="canchas" element={<CanchasView clubId={club?.id} />} />
+            <Route path="reservas" element={<ReservasClubView clubId={club?.id} />} />
+            
+            {/* New Premium Views */}
+            <Route path="ventas" element={<VentasView clubId={club?.id} />} />
+            <Route path="stock" element={<StockView clubId={club?.id} />} />
+            <Route path="promociones" element={<PromocionesView clubId={club?.id} />} />
+            <Route path="configuracion" element={<ConfiguracionClubView clubId={club?.id} />} />
+          </Routes>
+        </div>
+      </main>
+    </div>
   );
 }

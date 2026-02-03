@@ -1,35 +1,19 @@
-// src/pages/RegistroDinamicoClub.jsx
 import React, { useState } from 'react';
-import { Button, Input, Select, Checkbox, Upload, message, Typography } from 'antd';
-import {
-  UserOutlined,
-  MailOutlined,
-  LockOutlined,
-  HomeOutlined,
-  EnvironmentOutlined,
-  PhoneOutlined,
-  PictureOutlined,
-  CheckCircleOutlined,
-} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Building2, MapPin, Phone, Mail, Lock, Dumbbell, Star, Camera, CheckCircle, ArrowRight, ArrowLeft, User, CreditCard, UploadCloud 
+} from 'lucide-react';
+import { message } from 'antd';
 import { registrarClubCompleto } from '../services/authService';
 import { PROVINCIAS_ARGENTINAS } from '../utils/provincias';
-import styles from './RegistroDinamicoClub.module.css';
-
-const { TextArea } = Input;
-const { Text } = Typography;
 
 const SERVICIOS_POSIBLES = [
-  'ducha',
-  'cantina',
-  'parrilla',
-  'alquiler_paletas',
-  'alquiler_pelotas',
-  'estacionamiento',
-  'wifi',
-  'tienda',
+  'ducha', 'cantina', 'parrilla', 'alquiler_paletas', 'alquiler_pelotas', 'estacionamiento', 'wifi', 'tienda'
 ];
 
 export default function RegistroDinamicoClub() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -48,21 +32,24 @@ export default function RegistroDinamicoClub() {
   });
 
   const totalSteps = 12;
+  
   const pasos = [
-    { id: 'nombre', title: '¿Cuál es el nombre de tu club?' },
-    { id: 'direccion', title: '¿Dónde está ubicado?' },
-    { id: 'localidad', title: '¿En qué localidad?' },
-    { id: 'provincia', title: '¿En qué provincia?' },
-    { id: 'telefono', title: 'Teléfono de contacto' },
-    { id: 'email', title: 'Email del club' },
-    { id: 'password', title: 'Crea una contraseña' },
-    { id: 'confirmPassword', title: 'Repite la contraseña' },
-    { id: 'cantidad_canchas', title: '¿Cuántas canchas tiene el club?' },
-    { id: 'servicios', title: '¿Qué servicios ofrece tu club?' },
-    { id: 'fotoArchivo', title: 'Subí una foto del club (opcional)' },
-    { id: 'responsable', title: 'Datos del responsable' },
-    { id: 'resumen', title: '¡Casi listo!' },
+    { id: 'nombre', title: 'Nombre del Club', icon: Building2 },
+    { id: 'direccion', title: 'Ubicación', icon: MapPin },
+    { id: 'localidad', title: 'Localidad', icon: MapPin },
+    { id: 'provincia', title: 'Provincia', icon: MapPin },
+    { id: 'telefono', title: 'Teléfono de contacto', icon: Phone },
+    { id: 'email', title: 'Email del Club', icon: Mail },
+    { id: 'password', title: 'Contraseña', icon: Lock },
+    { id: 'confirmPassword', title: 'Confirmar Contraseña', icon: Lock },
+    { id: 'cantidad_canchas', title: 'Cantidad de Canchas', icon: Dumbbell },
+    { id: 'servicios', title: 'Servicios Ofrecidos', icon: Star },
+    { id: 'fotoArchivo', title: 'Foto del Club', icon: Camera },
+    { id: 'responsable', title: 'Datos del Responsable', icon: User },
+    { id: 'resumen', title: '¡Casi listo!', icon: CheckCircle },
   ];
+
+  const currentPaso = pasos[currentStep];
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -78,6 +65,30 @@ export default function RegistroDinamicoClub() {
   };
 
   const handleNext = async () => {
+    const pasoActual = currentPaso.id;
+
+    // Validaciones simples
+    if (pasoActual === 'password' && formData.password.length < 6) {
+      message.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    if (pasoActual === 'confirmPassword' && formData.password !== formData.confirmPassword) {
+      message.error('Las contraseñas no coinciden');
+      return;
+    }
+    if (pasoActual !== 'fotoArchivo' && pasoActual !== 'servicios' && !formData[pasoActual] && pasoActual !== 'resumen') {
+      // Ignorar validación vacía para campos opcionales o arrays
+      if (pasoActual === 'responsable') {
+         if(!formData.responsable_nombre || !formData.responsable_dni) {
+           message.error('Completa los datos del responsable');
+           return;
+         }
+      } else {
+         message.error('Este campo es obligatorio');
+         return;
+      }
+    }
+
     if (currentStep === totalSteps) {
       try {
         await registrarClubCompleto(
@@ -95,7 +106,7 @@ export default function RegistroDinamicoClub() {
           formData.responsable_dni
         );
         message.success('¡Club registrado exitosamente!');
-        window.location.href = '/panel-club';
+        navigate('/panel-club', { replace: true });
       } catch (err) {
         message.error(err.message || 'Error al registrar el club');
       }
@@ -105,244 +116,274 @@ export default function RegistroDinamicoClub() {
   };
 
   const handleBack = () => {
-    if (currentStep > 0) setCurrentStep(prev => prev - 1);
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    } else {
+      navigate('/registro/seleccion');
+    }
   };
-
-  const currentPaso = pasos[currentStep] || { title: '' };
 
   const renderPregunta = () => {
     switch (currentPaso.id) {
       case 'nombre':
         return (
-          <Input
-            size="large"
-            prefix={<UserOutlined />}
-            placeholder="Ej: Padel Misiones"
+          <input
+            type="text"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+            placeholder="Ej: Padel Center Posadas"
             value={formData.nombre}
             onChange={(e) => handleChange('nombre', e.target.value)}
+            autoFocus
           />
         );
-
       case 'direccion':
         return (
-          <TextArea
-            size="large"
-            prefix={<HomeOutlined />}
-            placeholder="Calle 123"
-            rows={2}
+          <input
+            type="text"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+            placeholder="Av. Corrientes 1234"
             value={formData.direccion}
             onChange={(e) => handleChange('direccion', e.target.value)}
+            autoFocus
           />
         );
-
       case 'localidad':
         return (
-          <Input
-            size="large"
-            prefix={<EnvironmentOutlined />}
+          <input
+            type="text"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             placeholder="Posadas"
             value={formData.localidad}
             onChange={(e) => handleChange('localidad', e.target.value)}
+            autoFocus
           />
         );
-
       case 'provincia':
         return (
-          <Select
-            size="large"
-            style={{ width: '100%' }}
+          <select
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none bg-white"
             value={formData.provincia}
-            onChange={(value) => handleChange('provincia', value)}
-            options={PROVINCIAS_ARGENTINAS.map(p => ({ label: p, value: p }))}
-          />
+            onChange={(e) => handleChange('provincia', e.target.value)}
+          >
+            {PROVINCIAS_ARGENTINAS.map(p => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
         );
-
       case 'telefono':
         return (
-          <Input
-            size="large"
-            prefix={<PhoneOutlined />}
-            placeholder="3764123456"
+          <input
+            type="tel"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+            placeholder="3764..."
             value={formData.telefono}
             onChange={(e) => handleChange('telefono', e.target.value)}
+            autoFocus
           />
         );
-
       case 'email':
         return (
-          <Input
-            size="large"
-            prefix={<MailOutlined />}
+          <input
             type="email"
-            placeholder="club@ejemplo.com"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+            placeholder="club@email.com"
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
+            autoFocus
           />
         );
-
       case 'password':
         return (
-          <Input.Password
-            size="large"
-            prefix={<LockOutlined />}
+          <input
+            type="password"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             placeholder="Mínimo 6 caracteres"
             value={formData.password}
             onChange={(e) => handleChange('password', e.target.value)}
+            autoFocus
           />
         );
-
       case 'confirmPassword':
         return (
-          <Input.Password
-            size="large"
-            prefix={<LockOutlined />}
-            placeholder="Repite tu contraseña"
+          <input
+            type="password"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+            placeholder="Repite la contraseña"
             value={formData.confirmPassword}
             onChange={(e) => handleChange('confirmPassword', e.target.value)}
+            autoFocus
           />
         );
-
       case 'cantidad_canchas':
         return (
-          <Input
-            size="large"
+          <input
             type="number"
-            min={1}
-            max={50}
-            placeholder="Ej: 4"
+            min="1"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             value={formData.cantidad_canchas}
-            onChange={(e) => handleChange('cantidad_canchas', parseInt(e.target.value) || 1)}
+            onChange={(e) => handleChange('cantidad_canchas', parseInt(e.target.value))}
+            autoFocus
           />
         );
-
       case 'servicios':
         return (
-          <div className={styles.serviciosGrid}>
-            {SERVICIOS_POSIBLES.map(servicio => {
-              const nombres = {
-                ducha: 'Duchas',
-                cantina: 'Cantina',
-                parrilla: 'Parrillas',
-                alquiler_paletas: 'Alquiler de paletas',
-                alquiler_pelotas: 'Alquiler de pelotas',
-                estacionamiento: 'Estacionamiento',
-                wifi: 'Wi-Fi',
-                tienda: 'Tienda',
-              };
-              return (
-                <Checkbox
-                  key={servicio}
+          <div className="grid grid-cols-2 gap-4">
+            {SERVICIOS_POSIBLES.map(servicio => (
+              <label 
+                key={servicio} 
+                className={`p-4 border rounded-xl cursor-pointer transition-all ${
+                  formData.servicios.includes(servicio) 
+                    ? 'border-primary bg-primary/10 text-secondary font-bold' 
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className="hidden"
                   checked={formData.servicios.includes(servicio)}
                   onChange={() => handleServicioToggle(servicio)}
-                >
-                  {nombres[servicio]}
-                </Checkbox>
-              );
-            })}
+                />
+                <span className="capitalize">{servicio.replace('_', ' ')}</span>
+              </label>
+            ))}
           </div>
         );
-
       case 'fotoArchivo':
         return (
-          <Upload.Dragger
-            beforeUpload={(file) => {
-              handleChange('fotoArchivo', file);
-              return false;
-            }}
-            showUploadList={false}
-            accept="image/*"
-          >
+          <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary transition-colors bg-slate-50 cursor-pointer relative">
+            <input 
+              type="file" 
+              accept="image/*"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onChange={(e) => {
+                if(e.target.files[0]) handleChange('fotoArchivo', e.target.files[0]);
+              }}
+            />
             {formData.fotoArchivo ? (
-              <img
-                src={URL.createObjectURL(formData.fotoArchivo)}
-                alt="Vista previa"
-                style={{ width: '100%', maxHeight: '200px', objectFit: 'cover' }}
-              />
+              <div className="relative">
+                <img
+                  src={URL.createObjectURL(formData.fotoArchivo)}
+                  alt="Vista previa"
+                  className="w-32 h-32 object-cover rounded-full mx-auto shadow-md"
+                />
+                <p className="mt-4 text-green-600 font-medium">Imagen seleccionada</p>
+                <p className="text-sm text-slate-400">Clic para cambiar</p>
+              </div>
             ) : (
-              <div>
-                <PictureOutlined style={{ fontSize: '32px', color: '#1890ff' }} />
-                <div style={{ marginTop: 8 }}>Haz clic o arrastra una imagen</div>
-                <Text type="secondary">JPG, PNG o WEBP</Text>
+              <div className="flex flex-col items-center gap-2 text-slate-500">
+                <UploadCloud size={48} className="text-slate-300" />
+                <p className="font-medium">Haz clic o arrastra una imagen</p>
+                <p className="text-sm text-slate-400">JPG, PNG o WEBP</p>
               </div>
             )}
-          </Upload.Dragger>
+          </div>
         );
-
       case 'responsable':
         return (
-          <div className={styles.responsableForm}>
-            <div className={styles.formItem}>
-              <label>Nombre del responsable</label>
-              <Input
-                placeholder="Nombre completo"
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
+              <input
+                type="text"
+                className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                 value={formData.responsable_nombre}
                 onChange={(e) => handleChange('responsable_nombre', e.target.value)}
               />
             </div>
-            <div className={styles.formItem}>
-              <label>DNI del responsable</label>
-              <Input
-                placeholder="12345678"
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">DNI</label>
+              <input
+                type="text"
+                className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                 value={formData.responsable_dni}
                 onChange={(e) => handleChange('responsable_dni', e.target.value)}
               />
             </div>
           </div>
         );
-
       case 'resumen':
         return (
-          <div className={styles.resumen}>
-            <CheckCircleOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
-            <Text strong>Registro de {formData.nombre}</Text>
-            <div style={{ textAlign: 'left', marginTop: '24px', fontSize: '0.95rem' }}>
-              <p><strong>Dirección:</strong> {formData.direccion}, {formData.localidad}, {formData.provincia}</p>
-              <p><strong>Teléfono:</strong> {formData.telefono}</p>
-              <p><strong>Email:</strong> {formData.email}</p>
-              <p><strong>Canchas:</strong> {formData.cantidad_canchas}</p>
-              <p><strong>Servicios:</strong> {formData.servicios.length > 0 ? formData.servicios.map(s => {
-                const names = { ducha: 'Duchas', cantina: 'Cantina', parrilla: 'Parrillas', alquiler_paletas: 'Alquiler de paletas', alquiler_pelotas: 'Alquiler de pelotas', estacionamiento: 'Estacionamiento', wifi: 'Wi-Fi', tienda: 'Tienda' };
-                return names[s] || s;
-              }).join(', ') : 'Ninguno'}</p>
-              {formData.fotoArchivo && <p><strong>Foto:</strong> Seleccionada</p>}
-              <p><strong>Responsable:</strong> {formData.responsable_nombre} (DNI: {formData.responsable_dni})</p>
+          <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+            <div className="flex items-center gap-3 mb-6 text-green-600">
+              <CheckCircle size={32} />
+              <h3 className="text-xl font-bold">¡Casi listo!</h3>
+            </div>
+            <div className="space-y-3 text-slate-600">
+              <p><strong className="text-secondary">Club:</strong> {formData.nombre}</p>
+              <p><strong className="text-secondary">Ubicación:</strong> {formData.localidad}, {formData.provincia}</p>
+              <p><strong className="text-secondary">Responsable:</strong> {formData.responsable_nombre}</p>
+              <p><strong className="text-secondary">Email:</strong> {formData.email}</p>
+              <p><strong className="text-secondary">Canchas:</strong> {formData.cantidad_canchas}</p>
+              <p><strong className="text-secondary">Servicios:</strong> {formData.servicios.length} seleccionados</p>
             </div>
           </div>
         );
-
       default:
         return null;
     }
   };
 
   return (
-    <div className={styles.contenedor}>
-      <div className={styles.tarjeta}>
-        <div className={styles.progreso}>
-          Paso {currentStep + 1} de {totalSteps + 1}
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
+        
+        {/* Header Progress */}
+        <div className="bg-secondary p-6 text-white relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
+           <div className="relative z-10 flex items-center justify-between">
+             <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                 <currentPaso.icon size={20} className="text-primary" />
+               </div>
+               <div>
+                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Paso {currentStep + 1} de {totalSteps + 1}</p>
+                <h2 className="text-xl font-bold text-white">{currentPaso.title}</h2>
+              </div>
+             </div>
+           </div>
+           
+           {/* Progress Bar */}
+           <div className="mt-6 h-1.5 bg-white/10 rounded-full overflow-hidden">
+             <motion.div 
+               className="h-full bg-primary"
+               initial={{ width: 0 }}
+               animate={{ width: `${((currentStep + 1) / (totalSteps + 1)) * 100}%` }}
+               transition={{ duration: 0.3 }}
+             />
+           </div>
         </div>
 
-        <h2>{currentPaso.title}</h2>
+        {/* Content Body */}
+        <div className="p-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="min-h-[300px]"
+            >
+              {renderPregunta()}
+            </motion.div>
+          </AnimatePresence>
 
-        <div className={styles.pregunta}>
-          {renderPregunta()}
-        </div>
-
-        <div className={styles.botones}>
-          {currentStep > 0 && (
-            <Button onClick={handleBack} style={{ marginRight: '12px' }}>
-              Atrás
-            </Button>
-          )}
-          <Button
-            type="primary"
-            onClick={handleNext}
-            disabled={
-              (currentPaso.id === 'confirmPassword' && formData.password !== formData.confirmPassword)
-            }
-          >
-            {currentStep === totalSteps ? 'Confirmar registro' : 'Siguiente'}
-          </Button>
+          <div className="flex items-center justify-between mt-8 pt-8 border-t border-slate-100">
+            <button 
+              onClick={handleBack}
+              className="text-slate-500 font-bold hover:text-secondary transition-colors flex items-center gap-2 px-4 py-2"
+            >
+              <ArrowLeft size={18} /> Atrás
+            </button>
+            
+            <button
+              onClick={handleNext}
+              className="btn-primary py-3 px-8 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+            >
+              {currentStep === totalSteps ? 'Confirmar registro' : 'Siguiente'}
+              <ArrowRight size={18} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

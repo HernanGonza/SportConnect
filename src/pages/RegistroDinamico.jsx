@@ -1,17 +1,14 @@
-// src/pages/RegistroDinamico.jsx
 import React, { useState } from 'react';
-import { Button, Input, DatePicker, Select, Radio, Upload, message, Typography, Checkbox } from 'antd';
-import { GoogleOutlined, FacebookOutlined, UserOutlined, MailOutlined, LockOutlined, IdcardOutlined, CalendarOutlined, HomeOutlined, EnvironmentOutlined, PhoneOutlined, PictureOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import locale from 'antd/es/date-picker/locale/es_ES';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  User, Mail, Lock, CreditCard, Calendar, MapPin, Phone, Camera, CheckCircle, ArrowRight, ArrowLeft, UploadCloud 
+} from 'lucide-react';
+import { message } from 'antd';
 import { registrarJugadorCompleto } from '../services/authService';
 import supabase from '../services/supabaseClient';
 import { CATEGORIAS_PADDEL } from '../utils/categorias';
 import { PROVINCIAS_ARGENTINAS } from '../utils/provincias';
-import styles from './RegistroDinamico.module.css';
-import { useNavigate } from 'react-router-dom';
-
-const { Text } = Typography;
-const { TextArea } = Input;
 
 const CATEGORIAS_CABALLEROS = CATEGORIAS_PADDEL.filter(cat => cat.startsWith('Caballeros'));
 const CATEGORIAS_DAMAS = CATEGORIAS_PADDEL.filter(cat => cat.startsWith('Damas'));
@@ -27,7 +24,7 @@ export default function RegistroDinamico() {
     password: '',
     confirmPassword: '',
     categoria: '',
-    fecha_nacimiento: null,
+    fecha_nacimiento: '',
     direccion: '',
     localidad: '',
     provincia: 'Misiones',
@@ -49,21 +46,21 @@ export default function RegistroDinamico() {
   const totalSteps = 14;
 
   const pasos = [
-    { id: 'metodo', title: '¿Cómo querés registrarte?' },
-    { id: 'nombre', title: '¿Cuál es tu nombre?' },
-    { id: 'apellido', title: '¿Cuál es tu apellido?' },
-    { id: 'email', title: '¿Cuál es tu email?' },
-    { id: 'password', title: 'Crea una contraseña' },
-    { id: 'confirmPassword', title: 'Repite tu contraseña' },
-    { id: 'dni', title: 'Ingresa tu DNI' },
-    { id: 'fecha_nacimiento', title: '¿Cuál es tu fecha de nacimiento?' },
-    { id: 'categoria', title: '¿En qué categoría jugás?' },
-    { id: 'direccion', title: '¿Dónde vivís?' },
-    { id: 'localidad', title: '¿En qué localidad?' },
-    { id: 'provincia', title: '¿En qué provincia?' },
-    { id: 'telefono', title: 'Teléfono (opcional)' },
-    { id: 'fotoArchivo', title: 'Subí tu foto de perfil (opcional)' },
-    { id: 'resumen', title: '¡Casi listo!' },
+    { id: 'metodo', title: '¿Cómo querés registrarte?', icon: User },
+    { id: 'nombre', title: '¿Cuál es tu nombre?', icon: User },
+    { id: 'apellido', title: '¿Cuál es tu apellido?', icon: User },
+    { id: 'email', title: '¿Cuál es tu email?', icon: Mail },
+    { id: 'password', title: 'Crea una contraseña', icon: Lock },
+    { id: 'confirmPassword', title: 'Repite tu contraseña', icon: Lock },
+    { id: 'dni', title: 'Ingresa tu DNI', icon: CreditCard },
+    { id: 'fecha_nacimiento', title: 'Fecha de nacimiento', icon: Calendar },
+    { id: 'categoria', title: '¿En qué categoría jugás?', icon: CheckCircle },
+    { id: 'direccion', title: '¿Dónde vivís?', icon: MapPin },
+    { id: 'localidad', title: '¿En qué localidad?', icon: MapPin },
+    { id: 'provincia', title: '¿En qué provincia?', icon: MapPin },
+    { id: 'telefono', title: 'Teléfono (opcional)', icon: Phone },
+    { id: 'fotoArchivo', title: 'Foto de perfil (opcional)', icon: Camera },
+    { id: 'resumen', title: '¡Casi listo!', icon: CheckCircle },
   ];
 
   const currentPaso = pasos[currentStep];
@@ -164,7 +161,7 @@ export default function RegistroDinamico() {
           formData.nombre,
           formData.apellido,
           formData.dni,
-          formData.fecha_nacimiento?.format('YYYY-MM-DD'),
+          formData.fecha_nacimiento, // Ya es string YYYY-MM-DD
           formData.direccion,
           formData.localidad,
           formData.provincia,
@@ -183,15 +180,27 @@ export default function RegistroDinamico() {
   };
 
   const handleBack = () => {
-    if (currentStep > 0) setCurrentStep(prev => prev - 1);
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    } else {
+      navigate('/registro/seleccion');
+    }
   };
 
   const renderPasswordValidations = () => (
-    <div style={{ marginTop: 8, fontSize: '0.85rem' }}>
-      <div><Checkbox checked={passwordValidations.minLength} style={{ color: passwordValidations.minLength ? 'green' : 'red' }}>Mínimo 8 caracteres</Checkbox></div>
-      <div><Checkbox checked={passwordValidations.uppercase} style={{ color: passwordValidations.uppercase ? 'green' : 'red' }}>Al menos una mayúscula</Checkbox></div>
-      <div><Checkbox checked={passwordValidations.number} style={{ color: passwordValidations.number ? 'green' : 'red' }}>Al menos un número</Checkbox></div>
-      <div><Checkbox checked={passwordValidations.specialChar} style={{ color: passwordValidations.specialChar ? 'green' : 'red' }}>Al menos un carácter especial (!@#$%^&*)</Checkbox></div>
+    <div className="mt-3 grid grid-cols-1 gap-1 text-sm">
+      <div className={`flex items-center gap-2 ${passwordValidations.minLength ? 'text-green-600' : 'text-slate-400'}`}>
+        <CheckCircle size={14} /> Mínimo 8 caracteres
+      </div>
+      <div className={`flex items-center gap-2 ${passwordValidations.uppercase ? 'text-green-600' : 'text-slate-400'}`}>
+        <CheckCircle size={14} /> Al menos una mayúscula
+      </div>
+      <div className={`flex items-center gap-2 ${passwordValidations.number ? 'text-green-600' : 'text-slate-400'}`}>
+        <CheckCircle size={14} /> Al menos un número
+      </div>
+      <div className={`flex items-center gap-2 ${passwordValidations.specialChar ? 'text-green-600' : 'text-slate-400'}`}>
+        <CheckCircle size={14} /> Al menos un carácter especial (!@#$%^&*)
+      </div>
     </div>
   );
 
@@ -199,252 +208,268 @@ export default function RegistroDinamico() {
     switch (currentPaso.id) {
       case 'metodo':
         return (
-          <div className={styles.opcionesLogin}>
-            <Button icon={<GoogleOutlined />} block size="large" onClick={handleGoogle}>
+          <div className="space-y-4">
+            <button 
+              onClick={handleGoogle}
+              className="w-full flex items-center justify-center gap-3 py-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors font-bold text-slate-700 bg-white"
+            >
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
               Continuar con Google
-            </Button>
-            <Button icon={<FacebookOutlined />} block size="large" style={{ marginTop: '12px' }} onClick={handleFacebook}>
+            </button>
+            <button 
+              onClick={handleFacebook}
+              className="w-full flex items-center justify-center gap-3 py-4 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors font-bold text-slate-700 bg-white"
+            >
+              <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook" className="w-5 h-5" />
               Continuar con Facebook
-            </Button>
-            <div style={{ margin: '24px 0', textAlign: 'center' }}>
-              <Text type="secondary">o</Text>
+            </button>
+            
+            <div className="flex items-center gap-4 my-6">
+              <div className="h-px bg-slate-200 flex-1"></div>
+              <span className="text-slate-400 text-sm font-medium">o</span>
+              <div className="h-px bg-slate-200 flex-1"></div>
             </div>
-            <Button
-              block
-              size="large"
+
+            <button
               onClick={() => {
                 handleChange('metodo', 'manual');
                 setCurrentStep(1);
               }}
+              className="w-full btn-primary py-4 rounded-xl flex items-center justify-center gap-2"
             >
               Registro manual
-            </Button>
+            </button>
           </div>
         );
 
       case 'nombre':
         return (
-          <Input
-            size="large"
-            prefix={<UserOutlined />}
+          <input
+            type="text"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             placeholder="Ej: Juan"
             value={formData.nombre}
             onChange={(e) => handleChange('nombre', e.target.value)}
+            autoFocus
           />
         );
 
       case 'apellido':
         return (
-          <Input
-            size="large"
-            prefix={<UserOutlined />}
+          <input
+            type="text"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             placeholder="Ej: Pérez"
             value={formData.apellido}
             onChange={(e) => handleChange('apellido', e.target.value)}
+            autoFocus
           />
         );
 
       case 'email':
         return (
-          <>
-            <Input
-              size="large"
-              prefix={<MailOutlined />}
+          <div>
+            <input
               type="email"
+              className={`w-full p-4 text-lg border rounded-xl focus:ring-2 outline-none ${emailValid ? 'border-green-500 focus:ring-green-200' : 'border-slate-200 focus:border-primary focus:ring-primary/20'}`}
               placeholder="tu@email.com"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
+              autoFocus
             />
-            <div style={{ marginTop: 8 }}>
-              <Checkbox checked={emailValid} style={{ color: emailValid ? 'green' : 'red' }}>
-                Email válido
-              </Checkbox>
-            </div>
-          </>
+            {emailValid && <p className="text-green-600 text-sm mt-2 flex items-center gap-1"><CheckCircle size={14}/> Email válido</p>}
+          </div>
         );
 
       case 'password':
         return (
-          <>
-            <Input.Password
-              size="large"
-              prefix={<LockOutlined />}
+          <div>
+            <input
+              type="password"
+              className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
               placeholder="Mínimo 8 caracteres"
               value={formData.password}
               onChange={(e) => handleChange('password', e.target.value)}
+              autoFocus
             />
             {renderPasswordValidations()}
-          </>
+          </div>
         );
 
       case 'confirmPassword':
         return (
-          <Input.Password
-            size="large"
-            prefix={<LockOutlined />}
+          <input
+            type="password"
+            className={`w-full p-4 text-lg border rounded-xl focus:ring-2 outline-none ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'border-red-500 focus:ring-red-200' : 'border-slate-200 focus:border-primary focus:ring-primary/20'}`}
             placeholder="Repite tu contraseña"
             value={formData.confirmPassword}
             onChange={(e) => handleChange('confirmPassword', e.target.value)}
-            status={formData.confirmPassword && formData.password !== formData.confirmPassword ? 'error' : ''}
+            autoFocus
           />
         );
 
       case 'dni':
         return (
-          <>
-            <Input
-              size="large"
-              prefix={<IdcardOutlined />}
+          <div>
+            <input
+              type="text"
+              className={`w-full p-4 text-lg border rounded-xl focus:ring-2 outline-none ${dniValid ? 'border-green-500 focus:ring-green-200' : 'border-slate-200 focus:border-primary focus:ring-primary/20'}`}
               placeholder="12345678"
               value={formData.dni}
               onChange={(e) => handleChange('dni', e.target.value)}
+              autoFocus
             />
-            <div style={{ marginTop: 8 }}>
-              <Checkbox checked={dniValid} style={{ color: dniValid ? 'green' : 'red' }}>
-                DNI válido (7-8 dígitos)
-              </Checkbox>
-            </div>
-          </>
+            {dniValid && <p className="text-green-600 text-sm mt-2 flex items-center gap-1"><CheckCircle size={14}/> DNI válido</p>}
+          </div>
         );
 
       case 'fecha_nacimiento':
         return (
-          <DatePicker
-            size="large"
-            style={{ width: '100%' }}
-            locale={locale}
-            format="DD/MM/YYYY"
-            placeholder="Selecciona una fecha"
+          <input
+            type="date"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             value={formData.fecha_nacimiento}
-            onChange={(date) => handleChange('fecha_nacimiento', date)}
+            onChange={(e) => handleChange('fecha_nacimiento', e.target.value)}
           />
         );
 
       case 'categoria':
         return (
-          <div style={{ display: 'flex', gap: '24px' }}>
-            <div style={{ flex: 1 }}>
-              <Text strong>Caballeros</Text>
-              <Radio.Group
-                value={formData.categoria}
-                onChange={(e) => handleChange('categoria', e.target.value)}
-                style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}
-              >
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+              <h3 className="font-bold text-secondary mb-3">Caballeros</h3>
+              <div className="space-y-2">
                 {CATEGORIAS_CABALLEROS.map(cat => (
-                  <Radio key={cat} value={cat}>
-                    {cat.replace('Caballeros ', '')}
-                  </Radio>
+                  <label key={cat} className="flex items-center gap-3 p-3 border border-slate-100 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input
+                      type="radio"
+                      name="categoria"
+                      value={cat}
+                      checked={formData.categoria === cat}
+                      onChange={(e) => handleChange('categoria', e.target.value)}
+                      className="text-primary focus:ring-primary"
+                    />
+                    <span className="text-slate-700">{cat.replace('Caballeros ', '')}</span>
+                  </label>
                 ))}
-              </Radio.Group>
+              </div>
             </div>
-            <div style={{ flex: 1 }}>
-              <Text strong>Damas</Text>
-              <Radio.Group
-                value={formData.categoria}
-                onChange={(e) => handleChange('categoria', e.target.value)}
-                style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}
-              >
+            <div>
+              <h3 className="font-bold text-secondary mb-3">Damas</h3>
+              <div className="space-y-2">
                 {CATEGORIAS_DAMAS.map(cat => (
-                  <Radio key={cat} value={cat}>
-                    {cat.replace('Damas ', '')}
-                  </Radio>
+                  <label key={cat} className="flex items-center gap-3 p-3 border border-slate-100 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
+                    <input
+                      type="radio"
+                      name="categoria"
+                      value={cat}
+                      checked={formData.categoria === cat}
+                      onChange={(e) => handleChange('categoria', e.target.value)}
+                      className="text-primary focus:ring-primary"
+                    />
+                    <span className="text-slate-700">{cat.replace('Damas ', '')}</span>
+                  </label>
                 ))}
-              </Radio.Group>
+              </div>
             </div>
           </div>
         );
 
       case 'direccion':
         return (
-          <TextArea
-            size="large"
-            prefix={<HomeOutlined />}
+          <input
+            type="text"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             placeholder="Calle 123"
-            rows={2}
             value={formData.direccion}
             onChange={(e) => handleChange('direccion', e.target.value)}
+            autoFocus
           />
         );
 
       case 'localidad':
         return (
-          <Input
-            size="large"
-            prefix={<EnvironmentOutlined />}
+          <input
+            type="text"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             placeholder="Posadas"
             value={formData.localidad}
             onChange={(e) => handleChange('localidad', e.target.value)}
+            autoFocus
           />
         );
 
       case 'provincia':
         return (
-          <Select
-            size="large"
-            style={{ width: '100%' }}
-            defaultValue="Misiones"
-            onChange={(value) => handleChange('provincia', value)}
+          <select
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none bg-white"
+            value={formData.provincia}
+            onChange={(e) => handleChange('provincia', e.target.value)}
           >
             {PROVINCIAS_ARGENTINAS.map(p => (
-              <Select.Option key={p} value={p}>
-                {p}
-              </Select.Option>
+              <option key={p} value={p}>{p}</option>
             ))}
-          </Select>
+          </select>
         );
 
       case 'telefono':
         return (
-          <Input
-            size="large"
-            prefix={<PhoneOutlined />}
+          <input
+            type="tel"
+            className="w-full p-4 text-lg border border-slate-200 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
             placeholder="3764123456"
             value={formData.telefono}
             onChange={(e) => handleChange('telefono', e.target.value)}
+            autoFocus
           />
         );
 
       case 'fotoArchivo':
         return (
-          <Upload.Dragger
-            beforeUpload={(file) => {
-              handleChange('fotoArchivo', file);
-              return false;
-            }}
-            showUploadList={false}
-            accept="image/*"
-          >
+          <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-primary transition-colors bg-slate-50 cursor-pointer relative">
+            <input 
+              type="file" 
+              accept="image/*"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onChange={(e) => {
+                if(e.target.files[0]) handleChange('fotoArchivo', e.target.files[0]);
+              }}
+            />
             {formData.fotoArchivo ? (
-              <div>
+              <div className="relative">
                 <img
                   src={URL.createObjectURL(formData.fotoArchivo)}
                   alt="Vista previa"
-                  style={{ width: '100%', maxHeight: '200px', objectFit: 'cover' }}
+                  className="w-32 h-32 object-cover rounded-full mx-auto shadow-md"
                 />
+                <p className="mt-4 text-green-600 font-medium">Imagen seleccionada</p>
+                <p className="text-sm text-slate-400">Clic para cambiar</p>
               </div>
             ) : (
-              <div>
-                <PictureOutlined style={{ fontSize: '32px', color: '#1890ff' }} />
-                <div style={{ marginTop: 8 }}>Haz clic o arrastra una imagen</div>
-                <Text type="secondary">JPG, PNG o WEBP</Text>
+              <div className="flex flex-col items-center gap-2 text-slate-500">
+                <UploadCloud size={48} className="text-slate-300" />
+                <p className="font-medium">Haz clic o arrastra una imagen</p>
+                <p className="text-sm text-slate-400">JPG, PNG o WEBP</p>
               </div>
             )}
-          </Upload.Dragger>
+          </div>
         );
 
       case 'resumen':
         return (
-          <div className={styles.resumen}>
-            <CheckCircleOutlined style={{ fontSize: '48px', color: '#52c41a', marginBottom: '16px' }} />
-            <Text strong>¡Casi listo!</Text>
-            <div style={{ textAlign: 'left', marginTop: '24px', fontSize: '0.95rem' }}>
-              <p><strong>Nombre:</strong> {formData.nombre} {formData.apellido}</p>
-              <p><strong>Email:</strong> {formData.email}</p>
-              <p><strong>DNI:</strong> {formData.dni}</p>
-              <p><strong>Categoría:</strong> {formData.categoria}</p>
-              <p><strong>Localidad:</strong> {formData.localidad}, {formData.provincia}</p>
-              {formData.telefono && <p><strong>Teléfono:</strong> {formData.telefono}</p>}
-              {formData.fotoArchivo && <p><strong>Foto:</strong> Seleccionada</p>}
+          <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+            <div className="flex items-center gap-3 mb-6 text-green-600">
+              <CheckCircle size={32} />
+              <h3 className="text-xl font-bold">¡Casi listo!</h3>
+            </div>
+            <div className="space-y-3 text-slate-600">
+              <p><strong className="text-secondary">Nombre:</strong> {formData.nombre} {formData.apellido}</p>
+              <p><strong className="text-secondary">Email:</strong> {formData.email}</p>
+              <p><strong className="text-secondary">DNI:</strong> {formData.dni}</p>
+              <p><strong className="text-secondary">Categoría:</strong> {formData.categoria}</p>
+              <p><strong className="text-secondary">Ubicación:</strong> {formData.localidad}, {formData.provincia}</p>
+              {formData.telefono && <p><strong className="text-secondary">Teléfono:</strong> {formData.telefono}</p>}
+              {formData.fotoArchivo && <p><strong className="text-secondary">Foto:</strong> Seleccionada</p>}
             </div>
           </div>
         );
@@ -454,43 +479,70 @@ export default function RegistroDinamico() {
     }
   };
 
-  if (formData.metodo !== 'manual' && currentStep === 0) {
-    return (
-      <div className={styles.contenedor}>
-        <div className={styles.tarjeta}>
-          <div className={styles.progreso}>Registro con {formData.metodo === 'google' ? 'Google' : 'Facebook'}</div>
-          <h2>Redirigiendo...</h2>
-          <Text>Espere un momento.</Text>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.contenedor}>
-      <div className={styles.tarjeta}>
-        <div className={styles.progreso}>
-          Paso {currentStep}/{totalSteps}
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
+        
+        {/* Header Progress */}
+        <div className="bg-secondary p-6 text-white relative overflow-hidden">
+           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl transform translate-x-10 -translate-y-10"></div>
+           <div className="relative z-10 flex items-center justify-between">
+             <div className="flex items-center gap-3">
+               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                 <currentPaso.icon size={20} className="text-primary" />
+               </div>
+               <div>
+                <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Paso {currentStep + 1} de {totalSteps + 1}</p>
+                <h2 className="text-xl font-bold text-white">{currentPaso.title}</h2>
+              </div>
+             </div>
+             <Link to="/registro/seleccion" className="text-white/50 hover:text-white transition-colors">
+               <CheckCircle size={20} />
+             </Link>
+           </div>
+           
+           {/* Progress Bar */}
+           <div className="mt-6 h-1.5 bg-white/10 rounded-full overflow-hidden">
+             <motion.div 
+               className="h-full bg-primary"
+               initial={{ width: 0 }}
+               animate={{ width: `${((currentStep + 1) / (totalSteps + 1)) * 100}%` }}
+               transition={{ duration: 0.3 }}
+             />
+           </div>
         </div>
 
-        <h2>{currentPaso.title}</h2>
+        {/* Content Body */}
+        <div className="p-8">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="min-h-[300px]"
+            >
+              {renderPregunta()}
+            </motion.div>
+          </AnimatePresence>
 
-        <div className={styles.pregunta}>
-          {renderPregunta()}
-        </div>
-
-        <div className={styles.botones}>
-          {currentStep > 0 && (
-            <Button onClick={handleBack} style={{ marginRight: '12px' }}>
-              Atrás
-            </Button>
-          )}
-          <Button
-            type="primary"
-            onClick={handleNext}
-          >
-            {currentStep === totalSteps ? 'Confirmar registro' : 'Siguiente'}
-          </Button>
+          <div className="flex items-center justify-between mt-8 pt-8 border-t border-slate-100">
+            <button 
+              onClick={handleBack}
+              className="text-slate-500 font-bold hover:text-secondary transition-colors flex items-center gap-2 px-4 py-2"
+            >
+              <ArrowLeft size={18} /> Atrás
+            </button>
+            
+            <button
+              onClick={handleNext}
+              className="btn-primary py-3 px-8 rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+            >
+              {currentStep === totalSteps ? 'Confirmar registro' : 'Siguiente'}
+              <ArrowRight size={18} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
