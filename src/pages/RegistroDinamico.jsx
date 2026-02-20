@@ -1,6 +1,6 @@
 // src/pages/RegistroDinamico.jsx
 import React, { useState } from 'react';
-import { Button, Input, DatePicker, Select, Radio, Upload, message, Typography, Checkbox } from 'antd';
+import { Button, Input, DatePicker, Select, Radio, Upload, message, Typography, Checkbox, Slider } from 'antd';
 import { GoogleOutlined, FacebookOutlined, UserOutlined, MailOutlined, LockOutlined, IdcardOutlined, CalendarOutlined, HomeOutlined, EnvironmentOutlined, PhoneOutlined, PictureOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import locale from 'antd/es/date-picker/locale/es_ES';
 import { registrarJugadorCompleto } from '../services/authService';
@@ -15,6 +15,10 @@ const { TextArea } = Input;
 
 const CATEGORIAS_CABALLEROS = CATEGORIAS_PADDEL.filter(cat => cat.startsWith('Caballeros'));
 const CATEGORIAS_DAMAS = CATEGORIAS_PADDEL.filter(cat => cat.startsWith('Damas'));
+
+// Nuevas constantes para campos pádel
+const POSICIONES = ['drive', 'reves', 'ambas'];
+const ESTILOS = ['agresivo', 'defensivo', 'tecnico', 'estrategico'];
 
 export default function RegistroDinamico() {
   const navigate = useNavigate();
@@ -34,6 +38,9 @@ export default function RegistroDinamico() {
     telefono: '',
     fotoArchivo: null,
     metodo: 'manual',
+    nivel_juego: 5,  // Default 5
+    posicion_preferida: '',  // Obligatorio
+    estilo_juego: '',  // Opcional
   });
 
   const [passwordValidations, setPasswordValidations] = useState({
@@ -46,7 +53,7 @@ export default function RegistroDinamico() {
   const [dniValid, setDniValid] = useState(false);
   const [emailValid, setEmailValid] = useState(false);
 
-  const totalSteps = 14;
+  const totalSteps = 17;  // +3 para nuevos campos
 
   const pasos = [
     { id: 'metodo', title: '¿Cómo querés registrarte?' },
@@ -58,6 +65,9 @@ export default function RegistroDinamico() {
     { id: 'dni', title: 'Ingresa tu DNI' },
     { id: 'fecha_nacimiento', title: '¿Cuál es tu fecha de nacimiento?' },
     { id: 'categoria', title: '¿En qué categoría jugás?' },
+    { id: 'nivel_juego', title: '¿Cuál es tu nivel de juego? (1-8)' },
+    { id: 'posicion_preferida', title: '¿Posición preferida?' },
+    { id: 'estilo_juego', title: '¿Estilo de juego? (opcional)' },
     { id: 'direccion', title: '¿Dónde vivís?' },
     { id: 'localidad', title: '¿En qué localidad?' },
     { id: 'provincia', title: '¿En qué provincia?' },
@@ -102,7 +112,12 @@ export default function RegistroDinamico() {
   };
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    let cleanedValue = value;
+    if (field === 'telefono') {
+      cleanedValue = value.trim();  // Limpia espacios innecesarios
+    }
+    setFormData(prev => ({ ...prev, [field]: cleanedValue }));
+
     if (field === 'password') validatePassword(value);
     if (field === 'dni') validateDni(value);
     if (field === 'email') validateEmail(value);
@@ -111,7 +126,7 @@ export default function RegistroDinamico() {
   const handleNext = async () => {
     const pasoActual = currentPaso.id;
 
-    // Validación básica de campo vacío
+    // Campos OBLIGATORIOS (solo estos se validan como requeridos)
     const requiredFields = {
       nombre: formData.nombre,
       apellido: formData.apellido,
@@ -121,17 +136,29 @@ export default function RegistroDinamico() {
       dni: formData.dni,
       fecha_nacimiento: formData.fecha_nacimiento,
       categoria: formData.categoria,
+      nivel_juego: formData.nivel_juego,
+      posicion_preferida: formData.posicion_preferida,
       direccion: formData.direccion,
       localidad: formData.localidad,
       provincia: formData.provincia,
     };
 
-    if (requiredFields[pasoActual] === '' || requiredFields[pasoActual] === null || requiredFields[pasoActual] === undefined) {
-      message.error(`Por favor completa ${currentPaso.title.toLowerCase()}`);
-      return;
+    // Solo validamos si el paso actual es uno de los obligatorios
+    if (requiredFields.hasOwnProperty(pasoActual)) {
+      const valor = requiredFields[pasoActual];
+
+      if (
+        valor === '' ||
+        valor === null ||
+        valor === undefined ||
+        (typeof valor === 'string' && valor.trim() === '')
+      ) {
+        message.error(`Por favor completa ${currentPaso.title.toLowerCase()}`);
+        return;
+      }
     }
 
-    // Validaciones específicas
+    // Validaciones específicas adicionales
     if (pasoActual === 'email' && !emailValid) {
       message.error('Ingresa un email válido');
       return;
@@ -152,11 +179,25 @@ export default function RegistroDinamico() {
       return;
     }
 
+    if (pasoActual === 'nivel_juego' && (formData.nivel_juego === null || formData.nivel_juego === undefined)) {
+      message.error('Selecciona tu nivel');
+      return;
+    }
+
+    if (pasoActual === 'posicion_preferida' && !formData.posicion_preferida) {
+      message.error('Selecciona una posición');
+      return;
+    }
+
+    // Flujo de pasos
     if (currentStep === 0) {
       if (formData.metodo === 'manual') {
         setCurrentStep(1);
       }
-    } else if (currentStep === totalSteps) {
+      return; // No avanza más si es OAuth (se maneja en handleGoogle/handleFacebook)
+    }
+
+    if (currentStep === totalSteps) {
       try {
         await registrarJugadorCompleto(
           formData.email,
@@ -170,7 +211,10 @@ export default function RegistroDinamico() {
           formData.provincia,
           formData.telefono || null,
           formData.categoria,
-          formData.fotoArchivo
+          formData.fotoArchivo,
+          formData.nivel_juego,
+          formData.posicion_preferida,
+          formData.estilo_juego || null
         );
         message.success('¡Registro exitoso!');
         navigate('/panel-usuario', { replace: true });
@@ -354,6 +398,49 @@ export default function RegistroDinamico() {
           </div>
         );
 
+      case 'nivel_juego':
+        return (
+          <Slider
+            min={1}
+            max={8}
+            marks={{ 1: '1 (Principiante)', 8: '8 (Pro)' }}
+            value={formData.nivel_juego}
+            onChange={(value) => handleChange('nivel_juego', value)}
+          />
+        );
+
+      case 'posicion_preferida':
+        return (
+          <Radio.Group
+            value={formData.posicion_preferida}
+            onChange={(e) => handleChange('posicion_preferida', e.target.value)}
+          >
+            {POSICIONES.map(pos => (
+              <Radio key={pos} value={pos}>
+                {pos.charAt(0).toUpperCase() + pos.slice(1)}
+              </Radio>
+            ))}
+          </Radio.Group>
+        );
+
+      case 'estilo_juego':
+        return (
+          <Select
+            size="large"
+            style={{ width: '100%' }}
+            placeholder="Selecciona (opcional)"
+            value={formData.estilo_juego}
+            onChange={(value) => handleChange('estilo_juego', value)}
+            allowClear
+          >
+            {ESTILOS.map(est => (
+              <Select.Option key={est} value={est}>
+                {est.charAt(0).toUpperCase() + est.slice(1)}
+              </Select.Option>
+            ))}
+          </Select>
+        );
+
       case 'direccion':
         return (
           <TextArea
@@ -442,6 +529,9 @@ export default function RegistroDinamico() {
               <p><strong>Email:</strong> {formData.email}</p>
               <p><strong>DNI:</strong> {formData.dni}</p>
               <p><strong>Categoría:</strong> {formData.categoria}</p>
+              <p><strong>Nivel:</strong> {formData.nivel_juego}</p>
+              <p><strong>Posición:</strong> {formData.posicion_preferida}</p>
+              {formData.estilo_juego && <p><strong>Estilo:</strong> {formData.estilo_juego}</p>}
               <p><strong>Localidad:</strong> {formData.localidad}, {formData.provincia}</p>
               {formData.telefono && <p><strong>Teléfono:</strong> {formData.telefono}</p>}
               {formData.fotoArchivo && <p><strong>Foto:</strong> Seleccionada</p>}

@@ -86,71 +86,93 @@ export async function registrarJugadorCompleto(
   provincia,
   telefono,
   categoria,
-  fotoArchivo
+  fotoArchivo,
+  nivel_juego,  // Nuevo
+  posicion_preferida,  // Nuevo
+  estilo_juego  // Nuevo (opcional)
 ) {
-  const { data, error: authError } = await supabase.auth.signUp({ email, password });
-
-  if (authError) throw authError;
-  if (!data.user) throw new Error('No se creó el usuario');
-
-  const userId = data.user.id;
-  let fotoUrl = null;
-
+  let foto_perfil_url = null;
   if (fotoArchivo) {
-    fotoUrl = await subirFotoPerfil(userId, fotoArchivo);
+    const userIdTemp = crypto.randomUUID();  // Temp ID para upload; se sobreescribe después
+    foto_perfil_url = await subirFotoPerfil(userIdTemp, fotoArchivo);
   }
 
-  const { error: dbError } = await supabase.from('usuarios').insert({
-    id: userId,
-    email,
-    nombre,
-    apellido,
-    dni,
-    fecha_nacimiento,
-    direccion,
-    localidad,
-    provincia,
-    telefono,
-    categoria,
-    tipo: 'jugador',
-    foto_perfil_url: fotoUrl,
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/auth/register-jugador`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      password,
+      nombre,
+      apellido,
+      dni,
+      fecha_nacimiento,
+      direccion,
+      localidad,
+      provincia,
+      telefono,
+      categoria,
+      nivel_juego,
+      posicion_preferida,
+      estilo_juego,
+      foto_perfil_url  // Pasa la URL ya subida
+    }),
   });
 
-  if (dbError) throw dbError;
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Error al registrar jugador');
+  }
 
-  return data;
+  const { user_id } = await response.json();
+
+  // Si foto se subió con temp ID, actualiza el path con real user_id si es necesario (opcional, si querés renombrar)
+  return { user: { id: user_id } };  // Simula el return anterior para compatibilidad
 }
 
-export async function iniciarSesion(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
-
-  const { data: perfil } = await supabase
-    .from('usuarios')
-    .select('tipo')
-    .eq('id', data.user.id)
-    .single();
-
-  return { ...data, tipo: perfil?.tipo || 'jugador' };
-}
-
-export async function cerrarSesion() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
-}
-
+// Actualiza obtenerPerfilUsuario (cambia 'usuarios' a 'jugadores')
 export async function obtenerPerfilUsuario() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return null;
 
   const { data } = await supabase
-    .from('usuarios')
+    .from('jugadores')
     .select('*')
     .eq('id', session.user.id)
     .single();
 
   return data;
 }
+
+// En iniciarSesion: Quita 'tipo' (ya no existe). Para detectar, chequea tablas:
+// Ejemplo simplificado
+export async function iniciarSesion(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+
+  // Detectar tipo
+  const { data: jugador } = await supabase.from('jugadores').select('id').eq('id', data.user.id).single();
+  const { data: club } = await supabase.from('clubes').select('id').eq('id', data.user.id).single();
+  const { data: empleado } = await supabase.from('empleados_club').select('id').eq('user_id', data.user.id).single();
+
+  let tipo = 'desconocido';
+  if (jugador) tipo = 'jugador';
+  else if (club) tipo = 'club';
+  else if (empleado) tipo = 'empleado';
+
+  return { ...data, tipo };
+}
+
+
+
+export async function cerrarSesion() {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+
 
 // EMPLEADOS
 export async function crearEmpleado(
