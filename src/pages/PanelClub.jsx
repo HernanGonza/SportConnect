@@ -1,12 +1,12 @@
 // src/pages/PanelClub.jsx
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Routes, Route } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
   Users, TrendingUp, Calendar, DollarSign, Activity, 
   MoreVertical, Edit, Trash2, Plus, Search, Filter 
 } from 'lucide-react';
-import { message } from 'antd'; // Keep for notifications for now
+import { message } from 'antd';
 import Sidebar from '../components/Sidebar';
 import CrearEmpleadoModal from '../components/CrearEmpleadoModal';
 import EditarEmpleadoModal from '../components/EditarEmpleadoModal';
@@ -17,10 +17,20 @@ import VentasView from '../components/VentasView';
 import StockView from '../components/StockView';
 import PromocionesView from '../components/PromocionesView';
 import ConfiguracionClubView from '../components/ConfiguracionClubView';
-import supabase from '../services/supabaseClient';
 import { eliminarEmpleado } from '../services/authService';
 
-// Dashboard Component
+
+// =======================
+// MOCK MODE
+// =======================
+
+const MOCK_MODE = true;
+
+
+// =======================
+// Dashboard
+// =======================
+
 const DashboardView = ({ club }) => {
   const stats = [
     { label: 'Ingresos del día', value: '$125.000', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-50' },
@@ -50,7 +60,6 @@ const DashboardView = ({ club }) => {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, idx) => (
           <motion.div
@@ -73,7 +82,6 @@ const DashboardView = ({ club }) => {
         ))}
       </div>
 
-      {/* Recent Activity / Chart Placeholder */}
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
           <div className="flex justify-between items-center mb-6">
@@ -106,7 +114,11 @@ const DashboardView = ({ club }) => {
   );
 };
 
-// Empleados Component Refactored
+
+// =======================
+// Empleados (MOCK)
+// =======================
+
 const EmpleadosView = ({ clubId }) => {
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,33 +127,21 @@ const EmpleadosView = ({ clubId }) => {
   const [empleadoEditar, setEmpleadoEditar] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const cargarEmpleados = async () => {
-    const { data, error } = await supabase
-      .from('empleados_club')
-      .select('*')
-      .eq('club_id', clubId);
-
-    if (error) {
-      message.error('Error cargando empleados');
-    } else {
-      setEmpleados(data || []);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    if (clubId) cargarEmpleados();
-  }, [clubId]);
+    if (MOCK_MODE) {
+      setEmpleados([
+        { id: 1, nombre: 'Juan Perez', email: 'juan@mail.com', rol: 'admin' },
+        { id: 2, nombre: 'Maria Gomez', email: 'maria@mail.com', rol: 'empleado' },
+        { id: 3, nombre: 'Carlos Lopez', email: 'carlos@mail.com', rol: 'empleado' }
+      ]);
+      setLoading(false);
+    }
+  }, []);
 
   const handleEliminar = async (id) => {
-    if(!window.confirm('¿Seguro que deseas eliminar este empleado?')) return;
-    try {
-      await eliminarEmpleado(id);
-      message.success('Empleado eliminado');
-      cargarEmpleados();
-    } catch (err) {
-      message.error(err.message || 'Error al eliminar');
-    }
+    if (!window.confirm('¿Seguro que deseas eliminar este empleado?')) return;
+    setEmpleados(prev => prev.filter(emp => emp.id !== id));
+    message.success('Empleado eliminado');
   };
 
   const handleEditar = (empleado) => {
@@ -155,11 +155,8 @@ const EmpleadosView = ({ clubId }) => {
   );
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+      
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-secondary">Equipo de Trabajo</h2>
@@ -182,9 +179,6 @@ const EmpleadosView = ({ clubId }) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 transition-colors">
-          <Filter size={20} />
-        </button>
       </div>
 
       {loading ? (
@@ -201,23 +195,8 @@ const EmpleadosView = ({ clubId }) => {
               animate={{ scale: 1, opacity: 1 }}
               className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group relative"
             >
-              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                <button 
-                  onClick={() => handleEditar(emp)}
-                  className="p-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                >
-                  <Edit size={16} />
-                </button>
-                <button 
-                  onClick={() => handleEliminar(emp.id)}
-                  className="p-2 bg-slate-50 text-slate-600 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-
               <div className="flex flex-col items-center text-center">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-slate-100 to-slate-200 flex items-center justify-center text-2xl font-bold text-slate-400 mb-4">
+                <div className="w-20 h-20 rounded-full bg-linear-to-tr from-slate-100 to-slate-200 flex items-center justify-center text-2xl font-bold text-slate-400 mb-4">
                   {emp.nombre[0].toUpperCase()}
                 </div>
                 <h3 className="text-lg font-bold text-secondary">{emp.nombre}</h3>
@@ -230,12 +209,6 @@ const EmpleadosView = ({ clubId }) => {
               </div>
             </motion.div>
           ))}
-          
-          {filteredEmpleados.length === 0 && (
-            <div className="col-span-full text-center py-12 text-slate-400">
-              No se encontraron empleados.
-            </div>
-          )}
         </div>
       )}
 
@@ -243,61 +216,38 @@ const EmpleadosView = ({ clubId }) => {
         visible={modalCrearVisible}
         onCancel={() => setModalCrearVisible(false)}
         clubId={clubId}
-        onSuccess={cargarEmpleados}
+        onSuccess={() => {}}
       />
 
       <EditarEmpleadoModal
         visible={modalEditarVisible}
         onCancel={() => setModalEditarVisible(false)}
         empleado={empleadoEditar}
-        onSuccess={cargarEmpleados}
+        onSuccess={() => {}}
       />
     </motion.div>
   );
 };
 
-// Main Layout
+
+// =======================
+// MAIN
+// =======================
+
 export default function PanelClub() {
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const cargarDatos = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // MOCK DATA FOR PREVIEW
-      if (!user) {
-        setClub({
-          id: 'mock-club',
-          nombre: 'Padel Center Demo',
-          foto_url: null,
-          direccion: 'Av. Siempre Viva 123'
-        });
-        setLoading(false);
-        return;
-      }
-
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('clubes')
-        .select('*')
-        .eq('id', user.id);
-
-      if (error || !data || data.length === 0) {
-        console.error('Error cargando club:', error);
-        setLoading(false);
-        return;
-      }
-
-      setClub(data[0]);
+    if (MOCK_MODE) {
+      setClub({
+        id: 'mock-club',
+        nombre: 'Padel Center Demo',
+        foto_url: null,
+        direccion: 'Av. Siempre Viva 123'
+      });
       setLoading(false);
-    };
-
-    cargarDatos();
+    }
   }, []);
 
   if (loading) return (
@@ -306,7 +256,7 @@ export default function PanelClub() {
     </div>
   );
 
-  if (!club) return <div>Error: No se encontró el club. Por favor, cierra sesión y vuelve a entrar.</div>;
+  if (!club) return <div>Error: No se encontró el club.</div>;
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -324,8 +274,6 @@ export default function PanelClub() {
             <Route path="productos" element={<ProductosView clubId={club?.id} />} />
             <Route path="canchas" element={<CanchasView clubId={club?.id} />} />
             <Route path="reservas" element={<ReservasClubView clubId={club?.id} />} />
-            
-            {/* New Premium Views */}
             <Route path="ventas" element={<VentasView clubId={club?.id} />} />
             <Route path="stock" element={<StockView clubId={club?.id} />} />
             <Route path="promociones" element={<PromocionesView clubId={club?.id} />} />

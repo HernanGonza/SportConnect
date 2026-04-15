@@ -67,9 +67,30 @@ export default function PanelUsuario() {
       // }
 
       if (!user) {
-        navigate('/login', { replace: true });
-        return;
+  // MODO MOCK
+  setUsuario({
+    nombre: 'Juan Pérez',
+    categoria: '3ra',
+    email: 'juan@demo.com'
+  });
+
+  setReservas([
+    {
+      id: 'mock-1',
+      fecha: '2026-02-10',
+      hora_inicio: '18:00:00',
+      hora_fin: '19:30:00',
+      precio_total: 22000,
+      canchas: {
+        nombre: 'Cancha Central',
+        complejos: { nombre: 'Padel Pro Center', direccion: 'Av. Costanera 123' }
       }
+    }
+  ]);
+
+  setLoading(false);
+  return;
+}
 
       const { data: perfil } = await supabase
         .from('usuarios')
